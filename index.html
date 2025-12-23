@@ -1,0 +1,2620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能仓储WMS管理系统 - 3栋滑装车间</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .navbar-brand i {
+            color: var(--secondary-color);
+        }
+        
+        .sidebar {
+            background-color: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.05);
+            height: calc(100vh - 70px);
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 250px;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-250px);
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .sidebar-menu li a {
+            display: block;
+            padding: 15px 20px;
+            color: #555;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu li a:hover, .sidebar-menu li a.active {
+            background-color: var(--light-color);
+            color: var(--secondary-color);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .sidebar-menu li a i {
+            width: 25px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+        
+        .stat-card.blue .stat-icon {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+        
+        .stat-card.green .stat-icon {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success-color);
+        }
+        
+        .stat-card.orange .stat-icon {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .stat-card.red .stat-icon {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .dashboard-section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-top: none;
+        }
+        
+        .badge-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-available {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success-color);
+        }
+        
+        .badge-occupied {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .badge-pending {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .badge-in-progress {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+        
+        .btn-action {
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+        }
+        
+        .btn-scan {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-allocate {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-dispatch {
+            background-color: var(--warning-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-complete {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+        }
+        
+        .warehouse-layout {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .rack {
+            background-color: #d1d8e0;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .rack-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+        
+        .rack-levels {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .rack-level {
+            background-color: white;
+            border-radius: 5px;
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid #ddd;
+        }
+        
+        .rack-level.available {
+            border-left-color: var(--success-color);
+        }
+        
+        .rack-level.occupied {
+            border-left-color: var(--danger-color);
+        }
+        
+        .rack-level.reserved {
+            border-left-color: var(--warning-color);
+        }
+        
+        .location-code {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .location-status {
+            font-size: 0.8rem;
+        }
+        
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .pda-simulator {
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            width: 300px;
+            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .pda-screen {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border-radius: 10px;
+            padding: 15px;
+            height: 200px;
+            margin-bottom: 15px;
+            overflow-y: auto;
+        }
+        
+        .pda-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px;
+            width: 70px;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .pda-button:hover {
+            background-color: #2980b9;
+        }
+        
+        .pda-button.red {
+            background-color: #e74c3c;
+        }
+        
+        .pda-button.green {
+            background-color: #27ae60;
+        }
+        
+        .agv-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .agv-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 10px;
+        }
+        
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <button class="btn btn-outline-light me-3" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-warehouse me-2"></i>智能仓储WMS管理系统
+            </a>
+            <div class="navbar-text ms-auto d-none d-md-block">
+                <span id="currentTime"></span> | 3栋滑装车间
+            </div>
+            <div class="dropdown ms-3">
+                <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                    <i class="fas fa-user me-2"></i>仓库管理员
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>系统设置</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt me-2"></i>退出登录</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i>系统概览</a></li>
+            <li><a href="#" data-section="locations"><i class="fas fa-map-marker-alt"></i>库位管理</a></li>
+            <li><a href="#" data-section="inbound"><i class="fas fa-arrow-down"></i>入库管理</a></li>
+            <li><a href="#" data-section="outbound"><i class="fas fa-arrow-up"></i>出库管理</a></li>
+            <li><a href="#" data-section="tasks"><i class="fas fa-tasks"></i>任务监控</a></li>
+            <li><a href="#" data-section="agv"><i class="fas fa-robot"></i>AGV调度</a></li>
+            <li><a href="#" data-section="pda"><i class="fas fa-mobile-alt"></i>PDA模拟</a></li>
+            <li><a href="#" data-section="reports"><i class="fas fa-chart-bar"></i>报表分析</a></li>
+            <li><a href="#" data-section="settings"><i class="fas fa-cog"></i>系统设置</a></li>
+        </ul>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content" id="mainContent">
+        
+        <!-- 系统概览 -->
+        <section id="dashboard" class="content-section active">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">系统概览</h2>
+                    <p class="text-muted">3栋滑装车间智能仓储管理系统实时监控</p>
+                </div>
+            </div>
+            
+            <!-- 统计卡片 -->
+            <div class="row">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card blue">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon">
+                                <i class="fas fa-pallet"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value" id="totalInventory">1,248</div>
+                                <div class="stat-label">总库存量 (托)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card green">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value" id="availableLocations">86</div>
+                                <div class="stat-label">可用库位</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card orange">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value" id="activeTasks">12</div>
+                                <div class="stat-label">进行中任务</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card red">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <div class="stat-value" id="agvUtilization">78%</div>
+                                <div class="stat-label">AGV设备利用率</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 仓库布局与任务监控 -->
+            <div class="row mt-4">
+                <div class="col-lg-8">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-warehouse"></i>成品仓库实时布局 (1F)</h5>
+                        <div class="warehouse-layout">
+                            <div class="rack">
+                                <div class="rack-title">成品仓 - A区 (铰链优先存放区)</div>
+                                <div class="rack-levels" id="rackA">
+                                    <!-- 库位将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                            <div class="rack">
+                                <div class="rack-title">成品仓 - B区 (滑轨存放区)</div>
+                                <div class="rack-levels" id="rackB">
+                                    <!-- 库位将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>库位分配规则：</strong>铰链优先放置在第4层，滑轨不能放置在第4层，由WMS系统自动分配。
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-bell"></i>系统警报</h5>
+                        <div id="alertsList">
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>AGV #1 电量低</strong> - 当前电量23%，建议返回充电站
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>待入库区已满</strong> - 当前占用率92%，请及时处理入库任务
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>入库任务 #IN2023090156 已完成</strong> - 托盘已存入A-03-04库位
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section mt-4">
+                        <h5 class="section-title"><i class="fas fa-chart-line"></i>今日效率指标</h5>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>成品入库节拍达成率</span>
+                                <span class="fw-bold">94%</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 94%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>AGV任务准时率</span>
+                                <span class="fw-bold">98%</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 98%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>库存准确率</span>
+                                <span class="fw-bold">100%</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 库位管理 -->
+        <section id="locations" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">库位管理</h2>
+                    <p class="text-muted">查看和管理仓库所有库位状态</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="section-title mb-0"><i class="fas fa-map-marker-alt"></i>库位状态总览</h5>
+                    <div>
+                        <button class="btn btn-outline-primary me-2" id="refreshLocations">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLocationModal">
+                            <i class="fas fa-plus me-1"></i>添加库位
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>库位编码</th>
+                                <th>区域</th>
+                                <th>货架</th>
+                                <th>层数</th>
+                                <th>状态</th>
+                                <th>物料编码</th>
+                                <th>物料名称</th>
+                                <th>入库时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locationTableBody">
+                            <!-- 库位数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">显示 <span id="locationCount">0</span> 个库位</div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item disabled"><a class="page-link" href="#">上一页</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">下一页</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            
+            <div class="dashboard-section mt-4">
+                <h5 class="section-title"><i class="fas fa-filter"></i>库位状态分布</h5>
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="warehouse-layout">
+                            <div class="rack">
+                                <div class="rack-title">成品仓 - 库位状态可视化</div>
+                                <div class="rack-levels" id="rackVisualization">
+                                    <!-- 可视化库位将通过JavaScript动态生成 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-4">
+                            <h6>状态图例</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rack-level available me-3" style="width: 30px; height: 20px;"></div>
+                                <span>可用</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rack-level occupied me-3" style="width: 30px; height: 20px;"></div>
+                                <span>已占用</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rack-level reserved me-3" style="width: 30px; height: 20px;"></div>
+                                <span>任务占用中</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6>库位统计</h6>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>可用库位</span>
+                                    <span class="fw-bold">86</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 43%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>已占用库位</span>
+                                    <span class="fw-bold">102</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 51%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <span>任务占用中</span>
+                                    <span class="fw-bold">12</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 6%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 入库管理 -->
+        <section id="inbound" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">入库管理</h2>
+                    <p class="text-muted">管理成品托盘入库流程</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="section-title mb-0"><i class="fas fa-arrow-down"></i>待入库任务</h5>
+                    <div>
+                        <button class="btn btn-outline-primary me-2" id="refreshInbound">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createInboundModal">
+                            <i class="fas fa-plus me-1"></i>创建入库任务
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>任务编号</th>
+                                <th>托盘编码</th>
+                                <th>物料名称</th>
+                                <th>物料类型</th>
+                                <th>创建时间</th>
+                                <th>状态</th>
+                                <th>分配库位</th>
+                                <th>分配AGV</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inboundTableBody">
+                            <!-- 入库任务数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>入库流程说明</h6>
+                            <ol class="mb-0">
+                                <li>产线完成成品 → 放置到待入库区</li>
+                                <li>使用PDA扫描托盘码和库位码</li>
+                                <li>WMS分配最优库位（铰链放第4层，滑轨不放第4层）</li>
+                                <li>RCS调度AGV执行搬运任务</li>
+                                <li>AGV将托盘运送至指定库位</li>
+                                <li>系统自动更新库位状态</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>注意事项</h6>
+                            <ul class="mb-0">
+                                <li>待入库区库位被任务占用时，人工不可放置托盘</li>
+                                <li>确保托盘叉孔高度≥110mm，否则AGV无法安全叉取</li>
+                                <li>入库前检查托盘条码是否清晰可读</li>
+                                <li>如遇系统故障，使用"紧急人工入库"功能</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 出库管理 -->
+        <section id="outbound" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">出库管理</h2>
+                    <p class="text-muted">管理成品出库及物料配送任务</p>
+                </div>
+            </div>
+            
+            <div class="dashboard-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="section-title mb-0"><i class="fas fa-arrow-up"></i>出库任务</h5>
+                    <div>
+                        <button class="btn btn-outline-primary me-2" id="refreshOutbound">
+                            <i class="fas fa-sync-alt me-1"></i>刷新
+                        </button>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOutboundModal">
+                            <i class="fas fa-plus me-1"></i>创建出库任务
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>任务编号</th>
+                                <th>物料名称</th>
+                                <th>物料类型</th>
+                                <th>数量</th>
+                                <th>目标位置</th>
+                                <th>创建时间</th>
+                                <th>状态</th>
+                                <th>分配AGV</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="outboundTableBody">
+                            <!-- 出库任务数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="dashboard-section mt-4">
+                <h5 class="section-title"><i class="fas fa-history"></i>今日已完成任务</h5>
+                <div class="table-container">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>任务编号</th>
+                                <th>类型</th>
+                                <th>物料名称</th>
+                                <th>数量</th>
+                                <th>开始时间</th>
+                                <th>完成时间</th>
+                                <th>耗时</th>
+                                <th>执行AGV</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completedTasksTableBody">
+                            <!-- 已完成任务数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 任务监控 -->
+        <section id="tasks" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">任务监控</h2>
+                    <p class="text-muted">实时监控所有仓库任务执行状态</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-tasks"></i>实时任务看板</h5>
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">待处理 <span class="badge bg-light text-dark" id="pendingTasksCount">5</span></h6>
+                                    </div>
+                                    <div class="card-body" id="pendingTasks" style="min-height: 300px;">
+                                        <!-- 待处理任务卡片将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-white">
+                                        <h6 class="mb-0">进行中 <span class="badge bg-light text-dark" id="inProgressTasksCount">7</span></h6>
+                                    </div>
+                                    <div class="card-body" id="inProgressTasks" style="min-height: 300px;">
+                                        <!-- 进行中任务卡片将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">已完成 <span class="badge bg-light text-dark" id="completedTasksCount">23</span></h6>
+                                    </div>
+                                    <div class="card-body" id="completedTasks" style="min-height: 300px;">
+                                        <!-- 已完成任务卡片将通过JavaScript动态生成 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-chart-pie"></i>任务类型分布</h5>
+                        <div class="text-center">
+                            <canvas id="taskTypeChart" width="300" height="300"></canvas>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>成品入库</span>
+                                <span class="fw-bold">45%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>产线上料</span>
+                                <span class="fw-bold">30%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>成品出库</span>
+                                <span class="fw-bold">15%</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>库存转移</span>
+                                <span class="fw-bold">10%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section mt-4">
+                        <h5 class="section-title"><i class="fas fa-clock"></i>任务时效统计</h5>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>平均入库时间</span>
+                                <span class="fw-bold">4.2分钟</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>平均出库时间</span>
+                                <span class="fw-bold">3.8分钟</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 85%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>任务准时率</span>
+                                <span class="fw-bold">98.5%</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: 98%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- AGV调度 -->
+        <section id="agv" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">AGV调度</h2>
+                    <p class="text-muted">监控和管理AGV运行状态与任务分配</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-robot"></i>AGV实时状态</h5>
+                        <div class="row" id="agvStatusContainer">
+                            <!-- AGV状态卡片将通过JavaScript动态生成 -->
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>AGV运行路径模拟</h6>
+                            <div class="warehouse-layout">
+                                <div class="text-center py-4">
+                                    <div class="agv-path-visualization">
+                                        <!-- 简单的路径示意图 -->
+                                        <div class="d-flex justify-content-around align-items-center mb-3">
+                                            <div class="text-center">
+                                                <div class="agv-icon" style="background-color: #3498db;">
+                                                    <i class="fas fa-robot"></i>
+                                                </div>
+                                                <div class="mt-1">AGV #1</div>
+                                                <small class="text-success">执行任务中</small>
+                                            </div>
+                                            <div class="flex-grow-1 border-top border-primary mx-3 pt-3"></div>
+                                            <div class="text-center">
+                                                <div class="p-2 border rounded bg-light">
+                                                    <i class="fas fa-map-marker-alt text-danger"></i>
+                                                    <div>成品仓</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-around align-items-center">
+                                            <div class="text-center">
+                                                <div class="p-2 border rounded bg-light">
+                                                    <i class="fas fa-warehouse text-primary"></i>
+                                                    <div>待入库区</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1 border-top border-primary mx-3 pt-3"></div>
+                                            <div class="text-center">
+                                                <div class="agv-icon" style="background-color: #27ae60;">
+                                                    <i class="fas fa-robot"></i>
+                                                </div>
+                                                <div class="mt-1">AGV #2</div>
+                                                <small class="text-warning">充电中</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-chart-bar"></i>AGV性能指标</h5>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>AGV #1 堆高叉车</span>
+                                <span class="fw-bold">49.9%</span>
+                            </div>
+                            <div class="progress" style="height: 15px;">
+                                <div class="progress-bar" role="progressbar" style="width: 49.9%">设备利用率</div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>AGV #2 搬运叉车</span>
+                                <span class="fw-bold">47.8%</span>
+                            </div>
+                            <div class="progress" style="height: 15px;">
+                                <div class="progress-bar" role="progressbar" style="width: 47.8%">设备利用率</div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>平均任务响应时间</span>
+                                <span class="fw-bold">45秒</span>
+                            </div>
+                            <div class="progress" style="height: 15px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 90%">优秀</div>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>今日已完成任务数</span>
+                                <span class="fw-bold">42个</span>
+                            </div>
+                            <div class="progress" style="height: 15px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 70%">超出目标20%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section mt-4">
+                        <h5 class="section-title"><i class="fas fa-cogs"></i>AGV控制面板</h5>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <button class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-play me-1"></i>启动所有
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-warning w-100">
+                                    <i class="fas fa-pause me-1"></i>暂停所有
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-success w-100">
+                                    <i class="fas fa-bolt me-1"></i>强制充电
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-outline-danger w-100">
+                                    <i class="fas fa-stop me-1"></i>紧急停止
+                                </button>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <button class="btn btn-outline-info w-100" data-bs-toggle="modal" data-bs-target="#agvManualControlModal">
+                                    <i class="fas fa-gamepad me-1"></i>手动控制
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- PDA模拟 -->
+        <section id="pda" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">PDA操作模拟</h2>
+                    <p class="text-muted">模拟仓库人员使用PDA进行扫码和任务操作</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-mobile-alt"></i>PDA模拟器</h5>
+                        <div class="pda-simulator">
+                            <div class="pda-screen" id="pdaScreen">
+                                <div class="text-center mb-3">
+                                    <h5 class="text-dark">智能仓储 PDA</h5>
+                                    <p class="text-muted small">版本 2.1.3 | 3栋滑装车间</p>
+                                </div>
+                                <div id="pdaContent">
+                                    <div class="text-center">
+                                        <i class="fas fa-barcode fa-3x text-primary mb-3"></i>
+                                        <p>请扫描托盘条码或库位条码</p>
+                                        <div class="border rounded p-2 bg-white mb-2">
+                                            当前模式: <span class="fw-bold" id="pdaMode">入库扫描</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="pda-button" data-action="scanPallet">
+                                        <i class="fas fa-barcode"></i>
+                                        <div class="small">扫托盘</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="pda-button" data-action="scanLocation">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <div class="small">扫库位</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="pda-button green" data-action="confirm">
+                                        <i class="fas fa-check"></i>
+                                        <div class="small">确认</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="pda-button" data-action="inbound">
+                                        <i class="fas fa-arrow-down"></i>
+                                        <div class="small">入库</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="pda-button" data-action="outbound">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <div class="small">出库</div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="pda-button red" data-action="cancel">
+                                        <i class="fas fa-times"></i>
+                                        <div class="small">取消</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>PDA操作流程：</strong> 1. 选择操作类型 → 2. 扫描托盘码 → 3. 扫描库位码 → 4. 确认信息 → 5. 提交任务
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-list-alt"></i>PDA操作记录</h5>
+                        <div class="table-container">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>时间</th>
+                                        <th>操作类型</th>
+                                        <th>托盘码</th>
+                                        <th>库位码</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pdaLogTable">
+                                    <!-- PDA操作记录将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section mt-4">
+                        <h5 class="section-title"><i class="fas fa-qrcode"></i>模拟条码生成</h5>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 text-center">
+                                    <div class="mb-2">托盘条码示例</div>
+                                    <div class="bg-light p-2 font-monospace">P20230901A001</div>
+                                    <button class="btn btn-sm btn-outline-primary mt-2" id="generatePalletCode">
+                                        <i class="fas fa-sync-alt me-1"></i>生成新条码
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 text-center">
+                                    <div class="mb-2">库位条码示例</div>
+                                    <div class="bg-light p-2 font-monospace">A-03-04</div>
+                                    <button class="btn btn-sm btn-outline-primary mt-2" id="generateLocationCode">
+                                        <i class="fas fa-sync-alt me-1"></i>生成新条码
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>注意：</strong> 实际PDA操作中，条码通过摄像头扫描获取，此处仅为模拟演示。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 报表分析 -->
+        <section id="reports" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">报表分析</h2>
+                    <p class="text-muted">仓储运营数据统计与分析报告</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="dashboard-section">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="section-title mb-0"><i class="fas fa-chart-line"></i>仓库运营趋势</h5>
+                            <div>
+                                <select class="form-select form-select-sm" id="reportPeriod">
+                                    <option value="day">今日</option>
+                                    <option value="week">本周</option>
+                                    <option value="month">本月</option>
+                                    <option value="quarter">本季度</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">入库量趋势</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="inboundChart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">出库量趋势</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="outboundChart" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h6 class="mb-0">AGV利用率趋势</h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="agvUtilizationChart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-chart-pie"></i>库存分类统计</h5>
+                        <div class="text-center">
+                            <canvas id="inventoryChart" width="300" height="300"></canvas>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>铰链</span>
+                                <span class="fw-bold">520托</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>滑轨</span>
+                                <span class="fw-bold">415托</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>连接件</span>
+                                <span class="fw-bold">185托</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>其他</span>
+                                <span class="fw-bold">128托</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section mt-4">
+                        <h5 class="section-title"><i class="fas fa-file-alt"></i>报表导出</h5>
+                        <div class="list-group">
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                今日库存报告
+                                <span class="badge bg-primary rounded-pill"><i class="fas fa-download"></i></span>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                月度运营报告
+                                <span class="badge bg-primary rounded-pill"><i class="fas fa-download"></i></span>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                AGV效率分析报告
+                                <span class="badge bg-primary rounded-pill"><i class="fas fa-download"></i></span>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                库位利用率报告
+                                <span class="badge bg-primary rounded-pill"><i class="fas fa-download"></i></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 系统设置 -->
+        <section id="settings" class="content-section" style="display: none;">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h2 class="mb-0">系统设置</h2>
+                    <p class="text-muted">管理系统配置与参数设置</p>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-cog"></i>仓库参数配置</h5>
+                        <form id="warehouseSettingsForm">
+                            <div class="mb-3">
+                                <label class="form-label">仓库名称</label>
+                                <input type="text" class="form-control" value="3栋滑装车间成品仓" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">库位总数</label>
+                                <input type="number" class="form-control" value="200" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">AGV数量</label>
+                                <input type="number" class="form-control" value="2" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">入库节拍目标 (托/小时)</label>
+                                <input type="number" class="form-control" value="4.21" step="0.01">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">出库响应时间目标 (分钟)</label>
+                                <input type="number" class="form-control" value="5">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">库存准确率目标 (%)</label>
+                                <input type="number" class="form-control" value="99.5" step="0.1">
+                            </div>
+                            <button type="submit" class="btn btn-primary">保存设置</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="dashboard-section">
+                        <h5 class="section-title"><i class="fas fa-plug"></i>系统集成配置</h5>
+                        <div class="mb-4">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="wmsIntegration" checked>
+                                <label class="form-check-label" for="wmsIntegration">WMS系统集成</label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="rcsIntegration" checked>
+                                <label class="form-check-label" for="rcsIntegration">RCS调度系统集成</label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="mesIntegration">
+                                <label class="form-check-label" for="mesIntegration">MES生产系统集成 (二期)</label>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="erpIntegration">
+                                <label class="form-check-label" for="erpIntegration">ERP系统集成 (二期)</label>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>集成说明：</strong> 当前项目一期已完成WMS与RCS系统集成，实现物流内部闭环。MES/ERP集成将在二期实施。
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-section mt-4">
+                        <h5 class="section-title"><i class="fas fa-user-shield"></i>用户权限管理</h5>
+                        <div class="table-container">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>角色</th>
+                                        <th>最后登录</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>admin</td>
+                                        <td><span class="badge bg-primary">系统管理员</span></td>
+                                        <td>2023-09-01 14:30</td>
+                                        <td><span class="badge bg-success">在线</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>zhangsan</td>
+                                        <td><span class="badge bg-info">仓库主管</span></td>
+                                        <td>2023-09-01 13:45</td>
+                                        <td><span class="badge bg-success">在线</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>lisi</td>
+                                        <td><span class="badge bg-secondary">操作员</span></td>
+                                        <td>2023-09-01 12:20</td>
+                                        <td><span class="badge bg-warning">离线</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>wangwu</td>
+                                        <td><span class="badge bg-secondary">操作员</span></td>
+                                        <td>2023-09-01 10:15</td>
+                                        <td><span class="badge bg-success">在线</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm mt-2">
+                            <i class="fas fa-plus me-1"></i>添加用户
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </div> <!-- 主内容区结束 -->
+
+    <!-- 模态框和其他组件 -->
+    
+    <!-- 创建入库任务模态框 -->
+    <div class="modal fade" id="createInboundModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建入库任务</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createInboundForm">
+                        <div class="mb-3">
+                            <label class="form-label">托盘编码</label>
+                            <input type="text" class="form-control" placeholder="扫描或输入托盘编码" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">物料类型</label>
+                            <select class="form-select" required>
+                                <option value="">选择物料类型</option>
+                                <option value="hinge">铰链</option>
+                                <option value="slide">滑轨</option>
+                                <option value="connector">连接件</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">物料名称</label>
+                            <input type="text" class="form-control" placeholder="输入物料名称" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">数量</label>
+                            <input type="number" class="form-control" value="1" min="1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">来源位置</label>
+                            <select class="form-select" required>
+                                <option value="waiting_area">待入库区</option>
+                                <option value="production_line">生产线</option>
+                                <option value="temporary_storage">临时存放区</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoAllocate">
+                                <label class="form-check-label" for="autoAllocate">
+                                    自动分配库位 (WMS将根据规则分配最优库位)
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitInboundTask">创建任务</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AGV手动控制模态框 -->
+    <div class="modal fade" id="agvManualControlModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">AGV手动控制</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择AGV</label>
+                        <select class="form-select" id="selectAGV">
+                            <option value="agv1">AGV #1 (堆高叉车)</option>
+                            <option value="agv2">AGV #2 (搬运叉车)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">控制指令</label>
+                        <select class="form-select" id="controlCommand">
+                            <option value="go_to_charging">前往充电站</option>
+                            <option value="go_to_waiting">前往待命区</option>
+                            <option value="pause">暂停任务</option>
+                            <option value="resume">继续任务</option>
+                            <option value="emergency_stop">紧急停止</option>
+                            <option value="reset">重置状态</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">目标位置 (可选)</label>
+                        <input type="text" class="form-control" id="targetLocation" placeholder="例如: A-03-04">
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>警告：</strong> 手动控制AGV可能干扰自动化调度，请谨慎操作。
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="executeControl">执行控制指令</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // 全局变量和初始化
+        let currentSection = 'dashboard';
+        let pdaLogs = [];
+        let tasks = [];
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化时间显示
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // 初始化侧边栏切换
+            document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+            
+            // 初始化侧边栏菜单点击事件
+            document.querySelectorAll('.sidebar-menu a').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.getAttribute('data-section');
+                    switchSection(section);
+                    
+                    // 更新活动菜单项
+                    document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+            
+            // 初始化模拟数据
+            initializeData();
+            
+            // 初始化图表
+            initializeCharts();
+            
+            // 初始化PDA按钮事件
+            initializePDA();
+            
+            // 初始化模态框按钮事件
+            initializeModals();
+        });
+        
+        // 更新当前时间
+        function updateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('zh-CN', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit' 
+            });
+            const timeStr = now.toLocaleTimeString('zh-CN', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = `${dateStr} ${timeStr}`;
+        }
+        
+        // 切换侧边栏显示/隐藏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+        
+        // 切换内容区域
+        function switchSection(sectionId) {
+            // 隐藏所有内容区域
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // 显示目标内容区域
+            document.getElementById(sectionId).style.display = 'block';
+            currentSection = sectionId;
+            
+            // 如果是PDA部分，更新PDA屏幕
+            if (sectionId === 'pda') {
+                updatePDAScreen();
+            }
+        }
+        
+        // 初始化模拟数据
+        function initializeData() {
+            // 初始化库位数据
+            initializeLocations();
+            
+            // 初始化任务数据
+            initializeTasks();
+            
+            // 初始化AGV数据
+            initializeAGVData();
+            
+            // 初始化PDA日志
+            initializePDALogs();
+        }
+        
+        // 初始化库位数据
+        function initializeLocations() {
+            // 生成库位数据
+            const locations = [];
+            
+            // A区库位 (1-4列，1-5层)
+            for (let col = 1; col <= 4; col++) {
+                for (let level = 1; level <= 5; level++) {
+                    const locationCode = `A-${col.toString().padStart(2, '0')}-${level}`;
+                    // 随机状态
+                    const statusOptions = ['available', 'occupied', 'reserved'];
+                    const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+                    
+                    let materialCode = '';
+                    let materialName = '';
+                    let inboundTime = '';
+                    
+                    if (status === 'occupied') {
+                        // 随机物料
+                        const materials = [
+                            {code: 'M-HJ-001', name: '铰链 A型'},
+                            {code: 'M-HJ-002', name: '铰链 B型'},
+                            {code: 'M-HG-001', name: '滑轨 标准型'},
+                            {code: 'M-HG-002', name: '滑轨 重型'},
+                            {code: 'M-LJ-001', name: '连接件'}
+                        ];
+                        const material = materials[Math.floor(Math.random() * materials.length)];
+                        materialCode = material.code;
+                        materialName = material.name;
+                        
+                        // 随机入库时间 (最近7天内)
+                        const daysAgo = Math.floor(Math.random() * 7);
+                        const timeAgo = new Date();
+                        timeAgo.setDate(timeAgo.getDate() - daysAgo);
+                        timeAgo.setHours(8 + Math.floor(Math.random() * 9));
+                        timeAgo.setMinutes(Math.floor(Math.random() * 60));
+                        inboundTime = timeAgo.toLocaleString('zh-CN');
+                    }
+                    
+                    locations.push({
+                        code: locationCode,
+                        area: 'A区',
+                        rack: col,
+                        level: level,
+                        status: status,
+                        materialCode: materialCode,
+                        materialName: materialName,
+                        inboundTime: inboundTime
+                    });
+                }
+            }
+            
+            // 更新库位表格
+            updateLocationTable(locations);
+            
+            // 更新库位可视化
+            updateLocationVisualization(locations);
+        }
+        
+        // 更新库位表格
+        function updateLocationTable(locations) {
+            const tableBody = document.getElementById('locationTableBody');
+            tableBody.innerHTML = '';
+            
+            locations.forEach(location => {
+                const row = document.createElement('tr');
+                
+                // 状态徽章
+                let statusBadge = '';
+                if (location.status === 'available') {
+                    statusBadge = '<span class="badge-status badge-available">可用</span>';
+                } else if (location.status === 'occupied') {
+                    statusBadge = '<span class="badge-status badge-occupied">已占用</span>';
+                } else if (location.status === 'reserved') {
+                    statusBadge = '<span class="badge-status badge-pending">任务占用</span>';
+                }
+                
+                row.innerHTML = `
+                    <td>${location.code}</td>
+                    <td>${location.area}</td>
+                    <td>${location.rack}</td>
+                    <td>${location.level}</td>
+                    <td>${statusBadge}</td>
+                    <td>${location.materialCode || '-'}</td>
+                    <td>${location.materialName || '-'}</td>
+                    <td>${location.inboundTime || '-'}</td>
+                    <td>
+                        <button class="btn btn-action btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-action btn-sm btn-outline-warning">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 更新库位数量
+            document.getElementById('locationCount').textContent = locations.length;
+        }
+        
+        // 更新库位可视化
+        function updateLocationVisualization(locations) {
+            // 更新货架A显示
+            const rackA = document.getElementById('rackA');
+            rackA.innerHTML = '';
+            
+            // 筛选A区库位
+            const aLocations = locations.filter(loc => loc.area === 'A区');
+            
+            // 按层分组显示
+            for (let level = 1; level <= 5; level++) {
+                const levelLocations = aLocations.filter(loc => loc.level === level);
+                
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'rack-level';
+                
+                // 确定该层状态 (如果有任意库位被占用，则显示为占用)
+                let levelStatus = 'available';
+                let statusText = '可用';
+                
+                if (levelLocations.some(loc => loc.status === 'occupied')) {
+                    levelStatus = 'occupied';
+                    statusText = '已占用';
+                } else if (levelLocations.some(loc => loc.status === 'reserved')) {
+                    levelStatus = 'reserved';
+                    statusText = '任务占用';
+                }
+                
+                levelDiv.classList.add(levelStatus);
+                
+                levelDiv.innerHTML = `
+                    <div>
+                        <div class="location-code">第 ${level} 层</div>
+                        <div class="location-status">${levelLocations.length}个库位</div>
+                    </div>
+                    <div>
+                        <span class="badge-status badge-${levelStatus}">${statusText}</span>
+                    </div>
+                `;
+                
+                rackA.appendChild(levelDiv);
+            }
+            
+            // 更新货架B显示
+            const rackB = document.getElementById('rackB');
+            rackB.innerHTML = '';
+            
+            // 创建B区库位显示
+            for (let level = 1; level <= 5; level++) {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'rack-level';
+                
+                // B区随机状态
+                const statusOptions = ['available', 'occupied'];
+                const status = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+                const statusText = status === 'available' ? '可用' : '已占用';
+                
+                levelDiv.classList.add(status);
+                
+                levelDiv.innerHTML = `
+                    <div>
+                        <div class="location-code">第 ${level} 层</div>
+                        <div class="location-status">4个库位</div>
+                    </div>
+                    <div>
+                        <span class="badge-status badge-${status}">${statusText}</span>
+                    </div>
+                `;
+                
+                rackB.appendChild(levelDiv);
+            }
+        }
+        
+        // 初始化任务数据
+        function initializeTasks() {
+            // 入库任务数据
+            const inboundTasks = [
+                {id: 'IN2023090156', pallet: 'P20230901A001', material: '铰链 A型', type: '铰链', created: '2023-09-01 14:20', status: 'completed', location: 'A-03-04', agv: 'AGV #1'},
+                {id: 'IN2023090157', pallet: 'P20230901A002', material: '滑轨 标准型', type: '滑轨', created: '2023-09-01 14:35', status: 'in_progress', location: 'A-02-03', agv: 'AGV #1'},
+                {id: 'IN2023090158', pallet: 'P20230901A003', material: '铰链 B型', type: '铰链', created: '2023-09-01 14:40', status: 'pending', location: '待分配', agv: '待分配'},
+                {id: 'IN2023090159', pallet: 'P20230901A004', material: '连接件', type: '连接件', created: '2023-09-01 14:45', status: 'pending', location: '待分配', agv: '待分配'},
+                {id: 'IN2023090160', pallet: 'P20230901A005', material: '滑轨 重型', type: '滑轨', created: '2023-09-01 14:50', status: 'pending', location: '待分配', agv: '待分配'}
+            ];
+            
+            // 出库任务数据
+            const outboundTasks = [
+                {id: 'OUT2023090123', material: '铰链 A型', type: '铰链', quantity: 5, target: '产线装配区', created: '2023-09-01 13:30', status: 'completed', agv: 'AGV #2'},
+                {id: 'OUT2023090124', material: '滑轨 标准型', type: '滑轨', quantity: 10, target: '产线装配区', created: '2023-09-01 14:15', status: 'in_progress', agv: 'AGV #2'},
+                {id: 'OUT2023090125', material: '连接件', type: '连接件', quantity: 20, target: '产线装配区', created: '2023-09-01 14:30', status: 'pending', agv: '待分配'}
+            ];
+            
+            // 更新入库任务表格
+            updateInboundTable(inboundTasks);
+            
+            // 更新出库任务表格
+            updateOutboundTable(outboundTasks);
+            
+            // 更新已完成任务表格
+            updateCompletedTasksTable();
+            
+            // 更新任务看板
+            updateTaskBoard(inboundTasks, outboundTasks);
+        }
+        
+        // 更新入库任务表格
+        function updateInboundTable(tasks) {
+            const tableBody = document.getElementById('inboundTableBody');
+            tableBody.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const row = document.createElement('tr');
+                
+                // 状态徽章
+                let statusBadge = '';
+                if (task.status === 'completed') {
+                    statusBadge = '<span class="badge-status badge-available">已完成</span>';
+                } else if (task.status === 'in_progress') {
+                    statusBadge = '<span class="badge-status badge-in-progress">进行中</span>';
+                } else if (task.status === 'pending') {
+                    statusBadge = '<span class="badge-status badge-pending">待处理</span>';
+                }
+                
+                // 操作按钮
+                let actions = '';
+                if (task.status === 'pending') {
+                    actions = `
+                        <button class="btn btn-action btn-sm btn-allocate" data-task="${task.id}">
+                            <i class="fas fa-map-marker-alt"></i> 分配库位
+                        </button>
+                    `;
+                } else if (task.status === 'in_progress') {
+                    actions = `
+                        <button class="btn btn-action btn-sm btn-complete" data-task="${task.id}">
+                            <i class="fas fa-check"></i> 完成
+                        </button>
+                    `;
+                }
+                
+                row.innerHTML = `
+                    <td>${task.id}</td>
+                    <td>${task.pallet}</td>
+                    <td>${task.material}</td>
+                    <td>${task.type}</td>
+                    <td>${task.created}</td>
+                    <td>${statusBadge}</td>
+                    <td>${task.location}</td>
+                    <td>${task.agv}</td>
+                    <td>${actions}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 为按钮添加事件监听器
+            document.querySelectorAll('.btn-allocate').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-task');
+                    allocateLocationForTask(taskId);
+                });
+            });
+            
+            document.querySelectorAll('.btn-complete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-task');
+                    completeTask(taskId);
+                });
+            });
+        }
+        
+        // 更新出库任务表格
+        function updateOutboundTable(tasks) {
+            const tableBody = document.getElementById('outboundTableBody');
+            tableBody.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const row = document.createElement('tr');
+                
+                // 状态徽章
+                let statusBadge = '';
+                if (task.status === 'completed') {
+                    statusBadge = '<span class="badge-status badge-available">已完成</span>';
+                } else if (task.status === 'in_progress') {
+                    statusBadge = '<span class="badge-status badge-in-progress">进行中</span>';
+                } else if (task.status === 'pending') {
+                    statusBadge = '<span class="badge-status badge-pending">待处理</span>';
+                }
+                
+                // 操作按钮
+                let actions = '';
+                if (task.status === 'pending') {
+                    actions = `
+                        <button class="btn btn-action btn-sm btn-dispatch" data-task="${task.id}">
+                            <i class="fas fa-robot"></i> 分配AGV
+                        </button>
+                    `;
+                } else if (task.status === 'in_progress') {
+                    actions = `
+                        <button class="btn btn-action btn-sm btn-complete" data-task="${task.id}">
+                            <i class="fas fa-check"></i> 完成
+                        </button>
+                    `;
+                }
+                
+                row.innerHTML = `
+                    <td>${task.id}</td>
+                    <td>${task.material}</td>
+                    <td>${task.type}</td>
+                    <td>${task.quantity}</td>
+                    <td>${task.target}</td>
+                    <td>${task.created}</td>
+                    <td>${statusBadge}</td>
+                    <td>${task.agv}</td>
+                    <td>${actions}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // 为按钮添加事件监听器
+            document.querySelectorAll('.btn-dispatch').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-task');
+                    dispatchAGVForTask(taskId);
+                });
+            });
+            
+            document.querySelectorAll('.btn-complete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const taskId = this.getAttribute('data-task');
+                    completeTask(taskId);
+                });
+            });
+        }
+        
+        // 更新已完成任务表格
+        function updateCompletedTasksTable() {
+            const tableBody = document.getElementById('completedTasksTableBody');
+            tableBody.innerHTML = '';
+            
+            const completedTasks = [
+                {id: 'IN2023090155', type: '入库', material: '铰链 B型', quantity: 1, start: '14:10', end: '14:18', duration: '8分钟', agv: 'AGV #1'},
+                {id: 'OUT2023090122', type: '出库', material: '滑轨 重型', quantity: 3, start: '13:45', end: '13:52', duration: '7分钟', agv: 'AGV #2'},
+                {id: 'IN2023090154', type: '入库', material: '连接件', quantity: 1, start: '13:30', end: '13:38', duration: '8分钟', agv: 'AGV #1'},
+                {id: 'OUT2023090121', type: '出库', material: '铰链 A型', quantity: 8, start: '13:15', end: '13:22', duration: '7分钟', agv: 'AGV #2'},
+                {id: 'IN2023090153', type: '入库', material: '滑轨 标准型', quantity: 1, start: '13:00', end: '13:08', duration: '8分钟', agv: 'AGV #1'}
+            ];
+            
+            completedTasks.forEach(task => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${task.id}</td>
+                    <td>${task.type}</td>
+                    <td>${task.material}</td>
+                    <td>${task.quantity}</td>
+                    <td>${task.start}</td>
+                    <td>${task.end}</td>
+                    <td>${task.duration}</td>
+                    <td>${task.agv}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 更新任务看板
+        function updateTaskBoard(inboundTasks, outboundTasks) {
+            // 将所有任务合并
+            const allTasks = [
+                ...inboundTasks.map(task => ({...task, taskType: 'inbound'})),
+                ...outboundTasks.map(task => ({...task, taskType: 'outbound'}))
+            ];
+            
+            // 按状态分组
+            const pendingTasks = allTasks.filter(task => task.status === 'pending');
+            const inProgressTasks = allTasks.filter(task => task.status === 'in_progress');
+            const completedTasks = allTasks.filter(task => task.status === 'completed');
+            
+            // 更新任务计数
+            document.getElementById('pendingTasksCount').textContent = pendingTasks.length;
+            document.getElementById('inProgressTasksCount').textContent = inProgressTasks.length;
+            document.getElementById('completedTasksCount').textContent = completedTasks.length;
+            
+            // 更新待处理任务列
+            const pendingContainer = document.getElementById('pendingTasks');
+            pendingContainer.innerHTML = '';
+            
+            pendingTasks.forEach(task => {
+                const taskCard = document.createElement('div');
+                taskCard.className = 'card mb-2';
+                taskCard.innerHTML = `
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>${task.id}</strong>
+                                <div class="small">${task.taskType === 'inbound' ? '入库' : '出库'}: ${task.material}</div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                pendingContainer.appendChild(taskCard);
+            });
+            
+            // 更新进行中任务列
+            const inProgressContainer = document.getElementById('inProgressTasks');
+            inProgressContainer.innerHTML = '';
+            
+            inProgressTasks.forEach(task => {
+                const taskCard = document.createElement('div');
+                taskCard.className = 'card mb-2';
+                taskCard.innerHTML = `
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>${task.id}</strong>
+                                <div class="small">${task.taskType === 'inbound' ? '入库' : '出库'}: ${task.material}</div>
+                                <div class="small">AGV: ${task.agv}</div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                inProgressContainer.appendChild(taskCard);
+            });
+            
+            // 更新已完成任务列
+            const completedContainer = document.getElementById('completedTasks');
+            completedContainer.innerHTML = '';
+            
+            // 只显示最近5个已完成任务
+            const recentCompleted = completedTasks.slice(0, 5);
+            
+            recentCompleted.forEach(task => {
+                const taskCard = document.createElement('div');
+                taskCard.className = 'card mb-2';
+                taskCard.innerHTML = `
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>${task.id}</strong>
+                                <div class="small">${task.taskType === 'inbound' ? '入库' : '出库'}: ${task.material}</div>
+                                <div class="small text-success">已完成</div>
+                            </div>
+                            <div>
+                                <button class="btn btn-sm btn-outline-info">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                completedContainer.appendChild(taskCard);
+            });
+        }
+        
+        // 初始化AGV数据
+        function initializeAGVData() {
+            const agvData = [
+                {id: 'AGV #1', name: '堆高叉车', type: '2T堆高', status: 'working', battery: 78, task: 'IN2023090157', location: '成品仓通道', utilization: '49.9%'},
+                {id: 'AGV #2', name: '搬运叉车', type: '1T搬运', status: 'charging', battery: 23, task: 'OUT2023090124', location: '充电站', utilization: '47.8%'}
+            ];
+            
+            updateAGVStatus(agvData);
+        }
+        
+        // 更新AGV状态显示
+        function updateAGVStatus(agvData) {
+            const container = document.getElementById('agvStatusContainer');
+            container.innerHTML = '';
+            
+            agvData.forEach(agv => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 mb-4';
+                
+                // 状态徽章
+                let statusBadge = '';
+                let statusClass = '';
+                if (agv.status === 'working') {
+                    statusBadge = '<span class="badge-status badge-in-progress">工作中</span>';
+                    statusClass = 'border-primary';
+                } else if (agv.status === 'charging') {
+                    statusBadge = '<span class="badge-status badge-pending">充电中</span>';
+                    statusClass = 'border-warning';
+                } else if (agv.status === 'idle') {
+                    statusBadge = '<span class="badge-status badge-available">空闲</span>';
+                    statusClass = 'border-success';
+                } else if (agv.status === 'error') {
+                    statusBadge = '<span class="badge-status badge-occupied">故障</span>';
+                    statusClass = 'border-danger';
+                }
+                
+                // 电量指示条颜色
+                let batteryColor = 'success';
+                if (agv.battery < 20) {
+                    batteryColor = 'danger';
+                } else if (agv.battery < 50) {
+                    batteryColor = 'warning';
+                }
+                
+                col.innerHTML = `
+                    <div class="card ${statusClass}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div class="agv-status">
+                                <div class="agv-icon">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">${agv.id}</div>
+                                    <div class="small">${agv.name} (${agv.type})</div>
+                                </div>
+                            </div>
+                            <div>${statusBadge}</div>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>电量</span>
+                                    <span class="fw-bold">${agv.battery}%</span>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-${batteryColor}" role="progressbar" style="width: ${agv.battery}%"></div>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="small text-muted">当前任务</div>
+                                <div>${agv.task || '无'}</div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="small text-muted">当前位置</div>
+                                <div>${agv.location}</div>
+                            </div>
+                            <div class="mb-2">
+                                <div class="small text-muted">设备利用率</div>
+                                <div class="fw-bold">${agv.utilization}</div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-eye"></i> 详情
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning">
+                                    <i class="fas fa-cog"></i> 控制
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(col);
+            });
+        }
+        
+        // 初始化PDA日志
+        function initializePDALogs() {
+            pdaLogs = [
+                {time: '14:25:33', type: '入库扫描', pallet: 'P20230901A001', location: 'A-03-04', status: '成功'},
+                {time: '14:30:12', type: '出库扫描', pallet: 'P20230901B005', location: '出库区', status: '成功'},
+                {time: '14:35:47', type: '库存盘点', pallet: 'P20230901A003', location: 'A-02-01', status: '成功'},
+                {time: '14:40:21', type: '入库扫描', pallet: 'P20230901A002', location: 'A-02-03', status: '成功'},
+                {time: '14:45:09', type: '库位查询', pallet: '-', location: 'A-03-04', status: '成功'}
+            ];
+            
+            updatePDALogTable();
+        }
+        
+        // 更新PDA日志表格
+        function updatePDALogTable() {
+            const tableBody = document.getElementById('pdaLogTable');
+            tableBody.innerHTML = '';
+            
+            pdaLogs.forEach(log => {
+                const row = document.createElement('tr');
+                
+                // 状态徽章
+                let statusBadge = '';
+                if (log.status === '成功') {
+                    statusBadge = '<span class="badge bg-success">成功</span>';
+                } else if (log.status === '失败') {
+                    statusBadge = '<span class="badge bg-danger">失败</span>';
+                } else {
+                    statusBadge = `<span class="badge bg-secondary">${log.status}</span>`;
+                }
+                
+                row.innerHTML = `
+                    <td>${log.time}</td>
+                    <td>${log.type}</td>
+                    <td>${log.pallet}</td>
+                    <td>${log.location}</td>
+                    <td>${statusBadge}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 初始化图表
+        function initializeCharts() {
+            // 任务类型分布图 (饼图)
+            const taskTypeCtx = document.getElementById('taskTypeChart').getContext('2d');
+            new Chart(taskTypeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['成品入库', '产线上料', '成品出库', '库存转移'],
+                    datasets: [{
+                        data: [45, 30, 15, 10],
+                        backgroundColor: ['#3498db', '#27ae60', '#e74c3c', '#f39c12'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // 入库量趋势图
+            const inboundCtx = document.getElementById('inboundChart').getContext('2d');
+            new Chart(inboundCtx, {
+                type: 'line',
+                data: {
+                    labels: ['8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+                    datasets: [{
+                        label: '入库量 (托)',
+                        data: [12, 15, 18, 22, 10, 16, 20, 14],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '托盘数量'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 出库量趋势图
+            const outboundCtx = document.getElementById('outboundChart').getContext('2d');
+            new Chart(outboundCtx, {
+                type: 'line',
+                data: {
+                    labels: ['8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00'],
+                    datasets: [{
+                        label: '出库量 (托)',
+                        data: [8, 10, 12, 15, 9, 11, 13, 10],
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '托盘数量'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // AGV利用率趋势图
+            const agvUtilizationCtx = document.getElementById('agvUtilizationChart').getContext('2d');
+            new Chart(agvUtilizationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [
+                        {
+                            label: 'AGV #1',
+                            data: [48.2, 49.5, 50.1, 49.8, 49.9, 30.2, 25.4],
+                            backgroundColor: '#3498db'
+                        },
+                        {
+                            label: 'AGV #2',
+                            data: [46.8, 47.2, 47.9, 47.5, 47.8, 28.5, 22.1],
+                            backgroundColor: '#27ae60'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 60,
+                            title: {
+                                display: true,
+                                text: '利用率 (%)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 库存分类统计图
+            const inventoryCtx = document.getElementById('inventoryChart').getContext('2d');
+            new Chart(inventoryCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['铰链', '滑轨', '连接件', '其他'],
+                    datasets: [{
+                        data: [520, 415, 185, 128],
+                        backgroundColor: ['#3498db', '#27ae60', '#e74c3c', '#f39c12'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 初始化PDA功能
+        function initializePDA() {
+            // PDA按钮事件
+            document.querySelectorAll('.pda-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    handlePDAAction(action);
+                });
+            });
+            
+            // 生成条码按钮事件
+            document.getElementById('generatePalletCode').addEventListener('click', function() {
+                generatePalletCode();
+            });
+            
+            document.getElementById('generateLocationCode').addEventListener('click', function() {
+                generateLocationCode();
+            });
+        }
+        
+        // 处理PDA按钮动作
+        function handlePDAAction(action) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+            
+            switch(action) {
+                case 'scanPallet':
+                    // 模拟扫描托盘条码
+                    const palletCode = `P${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}A${Math.floor(Math.random()*900+100)}`;
+                    addPDALog(timeStr, '托盘扫描', palletCode, '-', '成功');
+                    updatePDAScreen(`托盘扫描成功: ${palletCode}`);
+                    break;
+                    
+                case 'scanLocation':
+                    // 模拟扫描库位条码
+                    const col = Math.floor(Math.random()*4)+1;
+                    const level = Math.floor(Math.random()*5)+1;
+                    const locationCode = `A-${col.toString().padStart(2,'0')}-${level}`;
+                    addPDALog(timeStr, '库位扫描', '-', locationCode, '成功');
+                    updatePDAScreen(`库位扫描成功: ${locationCode}`);
+                    break;
+                    
+                case 'inbound':
+                    // 切换到入库模式
+                    document.getElementById('pdaMode').textContent = '入库扫描';
+                    updatePDAScreen('已切换到入库模式。请先扫描托盘条码，然后扫描库位条码。');
+                    break;
+                    
+                case 'outbound':
+                    // 切换到出库模式
+                    document.getElementById('pdaMode').textContent = '出库扫描';
+                    updatePDAScreen('已切换到出库模式。请扫描要出库的托盘条码。');
+                    break;
+                    
+                case 'confirm':
+                    // 确认操作
+                    addPDALog(timeStr, '确认操作', '-', '-', '成功');
+                    updatePDAScreen('操作已确认，任务已提交到WMS系统。');
+                    break;
+                    
+                case 'cancel':
+                    // 取消操作
+                    addPDALog(timeStr, '取消操作', '-', '-', '成功');
+                    updatePDAScreen('操作已取消。');
+                    break;
+            }
+        }
+        
+        // 更新PDA屏幕显示
+        function updatePDAScreen(message) {
+            const pdaContent = document.getElementById('pdaContent');
+            if (message) {
+                pdaContent.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <p>${message}</p>
+                        <div class="border rounded p-2 bg-white mb-2">
+                            当前模式: <span class="fw-bold" id="pdaMode">入库扫描</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 添加PDA操作日志
+        function addPDALog(time, type, pallet, location, status) {
+            pdaLogs.unshift({
+                time: time,
+                type: type,
+                pallet: pallet,
+                location: location,
+                status: status
+            });
+            
+            // 只保留最近10条日志
+            if (pdaLogs.length > 10) {
+                pdaLogs.pop();
+            }
+            
+            updatePDALogTable();
+        }
+        
+        // 生成托盘条码
+        function generatePalletCode() {
+            const now = new Date();
+            const palletCode = `P${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}A${Math.floor(Math.random()*900+100)}`;
+            
+            document.querySelector('.bg-light.font-monospace').textContent = palletCode;
+            
+            // 添加到PDA日志
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+            addPDALog(timeStr, '生成条码', palletCode, '-', '成功');
+            
+            alert(`已生成托盘条码: ${palletCode}`);
+        }
+        
+        // 生成库位条码
+        function generateLocationCode() {
+            const col = Math.floor(Math.random()*4)+1;
+            const level = Math.floor(Math.random()*5)+1;
+            const locationCode = `A-${col.toString().padStart(2,'0')}-${level}`;
+            
+            document.querySelectorAll('.bg-light.font-monospace')[1].textContent = locationCode;
+            
+            // 添加到PDA日志
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+            addPDALog(timeStr, '生成条码', '-', locationCode, '成功');
+            
+            alert(`已生成库位条码: ${locationCode}`);
+        }
+        
+        // 初始化模态框按钮事件
+        function initializeModals() {
+            // 提交入库任务
+            document.getElementById('submitInboundTask').addEventListener('click', function() {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('createInboundModal'));
+                modal.hide();
+                
+                // 显示成功消息
+                showAlert('success', '入库任务创建成功', '任务已添加到待处理队列，WMS将自动分配库位。');
+                
+                // 刷新入库任务列表
+                setTimeout(() => {
+                    initializeTasks();
+                }, 1000);
+            });
+            
+            // 执行AGV控制指令
+            document.getElementById('executeControl').addEventListener('click', function() {
+                const agv = document.getElementById('selectAGV').value;
+                const command = document.getElementById('controlCommand').value;
+                const location = document.getElementById('targetLocation').value;
+                
+                const modal = bootstrap.Modal.getInstance(document.getElementById('agvManualControlModal'));
+                modal.hide();
+                
+                // 显示成功消息
+                showAlert('success', 'AGV控制指令已发送', `${agv === 'agv1' ? 'AGV #1' : 'AGV #2'} 已接收指令: ${command}${location ? `，目标位置: ${location}` : ''}`);
+            });
+        }
+        
+        // 分配库位给任务
+        function allocateLocationForTask(taskId) {
+            // 模拟WMS库位分配逻辑
+            const location = `A-0${Math.floor(Math.random()*4)+1}-0${Math.floor(Math.random()*5)+1}`;
+            
+            showAlert('info', '库位分配成功', `任务 ${taskId} 已分配到库位 ${location}，RCS正在调度AGV执行任务。`);
+            
+            // 刷新任务列表
+            setTimeout(() => {
+                initializeTasks();
+            }, 1000);
+        }
+        
+        // 分配AGV给任务
+        function dispatchAGVForTask(taskId) {
+            // 模拟RCS调度AGV
+            const agv = Math.random() > 0.5 ? 'AGV #1' : 'AGV #2';
+            
+            showAlert('info', 'AGV分配成功', `任务 ${taskId} 已分配给 ${agv}，AGV正在前往执行任务。`);
+            
+            // 刷新任务列表
+            setTimeout(() => {
+                initializeTasks();
+            }, 1000);
+        }
+        
+        // 完成任务
+        function completeTask(taskId) {
+            showAlert('success', '任务完成', `任务 ${taskId} 已完成，库位状态已更新。`);
+            
+            // 刷新任务列表
+            setTimeout(() => {
+                initializeTasks();
+            }, 1000);
+        }
+        
+        // 显示提示消息
+        function showAlert(type, title, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <strong>${title}</strong> - ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // 添加到警报列表顶部
+            const alertsList = document.getElementById('alertsList');
+            alertsList.insertAdjacentHTML('afterbegin', alertHtml);
+        }
+    </script>
+</body>
+</html>
